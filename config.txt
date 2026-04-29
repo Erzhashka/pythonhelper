@@ -1,8 +1,22 @@
-# Maze Configuration
+# Maze Generator Configuration
+# This is a default configuration file for the maze generator
+
+# Maze dimensions (number of cells)
 WIDTH=30
-HEIGHT=15
+HEIGHT=20
+
+# Entry and exit coordinates (x,y)
 ENTRY=0,0
-EXIT=19,14
+EXIT=29,19
+
+# Output file path
 OUTPUT_FILE=maze.txt
-PERFECT=False
-SEED=1000
+
+# Perfect maze (single path between entry and exit)
+PERFECT=True
+
+# Random seed for reproducibility (optional, defaults to random if not set)
+SEED=56
+
+# Algorithm to use (optional)
+ALGORITHM=recursive_backtracking
