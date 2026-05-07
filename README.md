@@ -1,338 +1,721 @@
-*This project has been created as part of the 42 curriculum*
+*This project has been created as part of the 42 curriculum by etoktona, ckruk.
 
-# A-Maze-ing: Maze Generator & Visualizer
 
-## Description
+---
 
-**A-Maze-ing** is a comprehensive maze generation and visualization system written in Python. It generates random, procedurally-created mazes using industry-standard algorithms, with support for reproducible generation via seeds, perfect maze mode, and interactive terminal visualization.
+## Index
 
-The project consists of two main components:
-1. **Maze Generator** (`a_maze_ing.py`): Generates mazes from configuration files in hexadecimal format
-2. **Terminal Visualizer** (`maze_visualizer.py`): Displays mazes interactively with user controls
+## A. Description
 
-### Key Features
+- [A.1. a-maze-ing](#a1-a-maze-ing)
+- [A.2. Project Overview](#a2-project-overview)
+- [A.3. Teamwork & Project Organization](#a3-teamwork--project-organization)
+  - [A.3.1. A Real Helper Contract: INTERFACES.md](#a31-a-real-helper-contract-interfacesmd)
+- [A.4. Configuration Parsing & Validation](#a4-configuration-parsing--validation)
+- [A.5. Core Concepts](#a5-core-concepts)
+  - [A.5.1. What is a Maze?](#a51-what-is-a-maze)
+- [A.6. Algorithms Used](#a6-algorithms-used)
+  - [A.6.1. Maze Generation — DFS (Depth-First Search)](#a61-maze-generation--dfs-depth-first-search)
+    - [A.6.1.a. What is DFS in simple words?](#a61a-what-is-dfs-in-simple-words)
+  - [A.6.2. Maze Path Solving — BFS (Breadth-First Search)](#a62-maze-path-solving--bfs-breadth-first-search)
+    - [A.6.2.a. What is BFS in simple words?](#a62a-what-is-bfs-in-simple-words)
+    - [A.6.2.b. Making the Maze Non-Perfect (Optional)](#a62b-making-the-maze-non-perfect-optional)
+- [A.7. Coordinate System](#a7-coordinate-system)
+- [A.8. 42 Marking Decoration (Conditional)](#a8-42-marking-decoration-conditional)
+- [A.9. Direction System as Dictionaries](#a9-direction-system-as-dictionaries)
+  - [A.9.1. Direction → Bit Value](#a91-direction--bit-value)
+  - [A.9.2. Direction → Movement Delta](#a92-direction--movement-delta)
+  - [A.9.3. Direction → Opposite Direction](#a93-direction--opposite-direction)
+  - [A.9.4. Benefits of Dictionaries](#a94-benefits-of-dictionaries)
+  - [A.9.5. Takeaway](#a95-takeaway)
+- [A.10. Project Structure](#a10-project-structure)
+- [A.11. AI Usage](#a11-ai-usage)
 
-✓ **Configurable Generation**: Full control via config files  
-✓ **Deterministic Output**: Same seed always produces identical mazes  
-✓ **Shortest Path Finding**: BFS algorithm for optimal solutions  
-✓ **Hexadecimal Format**: Compact wall encoding (4 bits per cell)  
-✓ **Perfect Maze Mode**: Single path between entry and exit  
-✓ **Terminal Visualization**: ASCII rendering with colors and interactions  
-✓ **Wall Validation**: Ensures mathematical maze coherence  
-✓ **Full Connectivity**: No isolated cells (except optional "42" pattern)  
-✓ **Error Handling**: Graceful validation and clear error messages  
+## B. Instructions
 
-## Instructions
+- [B.1. How to Run](#b1-how-to-run)
+  - [B.1.1. Clone the Repository](#b11-clone-the-repository)
+  - [B.1.2. Run with a Config File](#b12-run-with-a-config-file)
+  - [B.1.3. Run with the Makefile](#b13-run-with-the-makefile)
+    - [B.1.3.a. Default Usage](#b13a-default-usage)
+    - [B.1.3.b. Cleanup](#b13b-cleanup)
+- [B.2. Public API and Usage](#b2-public-api-and-usage)
+  - [B.2.1. Sections of the Public API](#b21-sections-of-the-public-api)
+  - [B.2.2. Install as a Package](#b22-install-as-a-package)
+  - [B.2.3. Quick API Example](#b23-quick-api-example)
 
-### Installation
+## C. Resources
 
-```bash
-make install
+- [C.1. Maze Generation & Graph Traversal](#c1-maze-generation--graph-traversal)
+- [C.2. Python & Data Structures](#c2-python--data-structures)
+
+## D. Future improvements
+
+- [D. Future Improvements](#d-future-improvements)
+
+## E. Final notes
+
+- [E. Final Notes](#e-final-notes)
+
+
+---
+
+# A. Description
+
+---
+
+# A.1. a-maze-ing
+
+The goal of the project is to generate and solve mazes programmatically.
+
+The program can:
+- generate **perfect** and **non-perfect** mazes,
+- guarantee maze validity (bounds, connectivity, wall coherence),
+- find the **shortest path** between an entry and an exit,
+- optionally decorate the maze with a **42 pattern** when space allows,
+- output the result in the required format for evaluation.
+
+The project is written in **Python**, with a strong focus on:
+- clean architecture,
+- clear separation of responsibilities,
+- algorithmic correctness,
+- readability for future students.
+
+This project is designed to be **educational**, **modular**, and **easy to reason about**, from beginners for beginners.
+
+---
+
+## A.2. Project Overview
+
+This program can:
+
+- Generate a **perfect maze** (only one path between any two cells)
+- Optionally turn it into a **non-perfect maze** (multiple paths allowed)
+- Solve the maze using **BFS** (shortest path guaranteed)
+- Reserve space for a **“42” decoration** inside the maze (conditional)
+- Output the maze and the solution path
+- Visualize the maze in the terminal with ASCII rendering
+
+---
+
+## A.3. Teamwork & Project Organization
+
+This project was developed by two people, and we intentionally split
+responsibilities by **problem domain**, not by file size.
+
+The maze project naturally breaks into two big concerns:
+
+1. Maze logic & algorithms
+2. Input/output, configuration, and display (UI)
+
+We used this natural separation to work in parallel without blocking each other.
+
+Person Etoktona — Maze Logic (Core Algorithms)
+Responsible for:
+
+- Maze data structure
+- Wall representation (bitmask logic)
+- Maze generation (DFS)
+- Maze solving (BFS)
+- Validation rules (connectivity, borders, coherence)
+- Non-perfect maze (extra openings)
+- 42 marking decoration
+
+This work lives mostly inside the `maze_files/` package.
+
+Person Ckruk— Application Layer & UX/UI
+Responsible for:
+
+- CLI entrypoint
+- Config parsing (`config.txt`)
+- Output formatting
+- Visualization
+- Program flow (when generation, solving, and output happen)
+
+This work lives at the root of the repository and treats the maze logic as a
+reusable module.
+
+Before writing any code, we created a small but strict shared contract:
+`INTERFACES.md`.
+
+### A.3.1 A real helper contract: *INTERFACES.md*
+
+This file defines:
+
+- what a `Maze` must expose,
+- how the grid is indexed (`maze.grid[y][x]`),
+- how coordinates are represented (`(x, y)`),
+- how walls are encoded (bitmask values),
+- what functions expect and return.
+
+In other words:
+
+We agreed on the rules first, then coded freely.
+
+Thanks to this:
+
+- nobody had to guess how the other side works,
+- no refactoring was needed later,
+- files merged cleanly on the first try,
+- no “but I thought it worked like this” moments.
+
+---
+
+## A.4. Configuration Parsing & Validation
+
+All user input for the CLI is provided through a simple configuration file
+(`config.txt`). Parsing and validation are handled by `config_parser.py`.
+
+This design ensures:
+- Maze logic never deals with raw strings,
+- Invalid inputs are rejected early,
+- The rest of the program works with **trusted, typed data**.
+
+
+The configuration file follows a strict `KEY=VALUE` format.
+
+Example:
+
+```
+WIDTH=20
+HEIGHT=10
+ENTRY=0,0
+EXIT=19,9
+PERFECT=True
+SEED=42
+```
+⸻
+
+#### Parsing Steps
+
+Parsing is performed in three clear phases:
+
+1. Lexical parsing
+   - Read the file line by line
+   - Strip whitespace
+   - Ignore empty lines and comments starting with `#`
+   - Require `KEY=VALUE` syntax (a missing `=` triggers an error)
+
+2. Validation and type conversion
+   - Required keys must be present: `WIDTH`, `HEIGHT`, `ENTRY`, `EXIT`,
+     `OUTPUT_FILE`, `PERFECT`
+   - Values are converted into typed Python data:
+     - `WIDTH`, `HEIGHT` → integers
+     - `ENTRY`, `EXIT` → `(x, y)` integer tuples parsed from `"x,y"`
+     - `PERFECT` → boolean (accepts values like `true/false`, `1/0`, `yes/no`)
+     - `SEED` → optional integer (if provided)
+   - Bounds checks are enforced:
+     - `0 <= entry.x < width` and `0 <= entry.y < height`
+     - same validation for `exit`
+   - Entry and exit cannot be the same coordinates
+
+3. Configuration object creation
+   - Once validated, values are stored in an immutable dataclass:
+
+```python
+@dataclass(frozen=True)
+class Config:
+    width: int
+    height: int
+    entry: tuple[int, int]
+    exit: tuple[int, int]
+    output_file: str
+    perfect: bool
+    seed: int | None = None
+```
+⸻
+
+---
+
+## A.5. Core Concepts
+
+### A.5.1. What is a Maze?
+A maze is a grid of cells.
+Each cell has **four possible walls**:
+
+- North (bit value [2^0] = 1)
+- East (bit value [2^1] = 2)
+- South (bit value [2^2] = 4)
+- West (bit value [2^3] = 8)
+
+A wall can be:
+
+- **closed** → you cannot move through it
+- **open** → you can move through it
+
+Internally, walls are stored using **bit masks** (numbers from 0–15).
+
+---
+
+## A.6. Algorithms Used
+
+### A.6.1. Maze Generation — DFS (Depth-First Search)
+
+#### A.6.1.a. What is DFS in simple words?
+
+DFS explores the maze by:
+
+- Starting from the entry cell.
+- Randomly visiting unvisited neighboring cells.
+- When moving to a neighbor, remove the wall between the two cells.
+- Reaches a cell with no unvisited neighbors, it **backtracks**.
+
+Think of it as:
+
+> Walk until stuck → step back → try a different direction
+
+This process creates a **perfect maze**, meaning:
+- Every cell is reachable,
+- There is exactly **one unique path** between any two cells.
+
+We chose DFS because it naturally produces a perfect maze and is easy to
+make reproducible with a seed. The algorithm is simple, fast for the maze
+sizes used in this project, and it integrates cleanly with the forbidden-cell
+logic used for the “42” decoration.
+
+The DFS is implemented using an **explicit stack** instead of recursion,
+to avoid recursion depth limits and keep the logic easier to follow.
+
+**Important rule**
+In a perfect maze:
+
+- There is **exactly one path** between any two cells
+
+---
+
+### A.6.2. Maze Path Solving — BFS (Breadth-First Search)
+
+#### A.6.2.a. What is BFS in simple words?
+BFS is used to **solve the maze** and BFS explores the maze layer by layer.
+
+1. One step away from the start
+2. Then two steps away
+3. Then three, and so on…
+
+It explores in **layers**.
+
+- BFS guarantees the **shortest path**
+- The **first time** BFS reaches the exit → that path is optimal
+
+BFS returns
+
+- A list of coordinates from entry → exit
+- This path is later converted into directions like:
+
+```
+NNEESWSS
+```
+---
+
+#### A.6.2.b. Making the Maze Non-Perfect (Optional)
+
+If `PERFECT=False` in the config:
+
+- The maze is first generated as perfect (DFS)
+- then **extra walls are opened**
+- this creates **multiple possible paths**
+
+This step does not break connectivity — it only adds choices.
+
+---
+
+## A.7. Coordinate System
+
+- Coordinates are always `(x, y)`
+- `(0, 0)` is the **top-left** corner
+- `x` increases to the right
+- `y` increases downward
+
+The maze grid is stored as:
+
+```
+maze.grid[y][x]
 ```
 
-### Running the Maze Generator
+---
+
+## A.8. 42 Marking Decoration (Conditional)
+
+If the maze is large enough:
+
+- A “42” pattern is **reserved in the center**
+- These cells are marked as **forbidden** for DFS and BFS search
+- DFS will **walk around** them
+
+If the entry or exit would land inside the decoration:
+
+- The decoration is skipped
+- A warning is printed
+- Maze generation continues normally
+
+This ensures:
+
+- No broken mazes
+- No forced paths
+- No fixed corridors
+
+---
+
+## A.9. Direction System as Dictionaries
+
+Directions (N/E/S/W) are used everywhere (carving, DFS, BFS, validators,
+decoration). Instead of many `if/elif` statements, we keep direction logic in dictionaries:
+
+- direction → bit value (which wall bit?)
+- direction → movement delta (how `(x, y)` changes?)
+- direction → opposite direction (which wall to update on the neighbor?)
+
+---
+
+### A.9.1. Direction → Bit Value
+
+Each cell in the maze stores its walls as a bitmask.
+
+Each direction corresponds to one bit:
+
+	•	North → a specific bit (1)
+	•	East → a specific bit (2)
+	•	South → a specific bit (4)
+	•	West → a specific bit (8)
+
+The dictionary maps directions to their bit values:
+
+“Which bit represents this wall?”
+
+This allows us to:
+	•	check if a wall exists
+	•	open a wall
+	•	close a wall
+
+Without this dictionary, we would need to hard-code numbers everywhere.
+
+⸻
+
+### A.9.2. Direction → Movement Delta
+
+When moving in the maze, each direction changes (x, y) differently:
+
+	•	North → (x, y - 1)
+	•	East → (x + 1, y)
+	•	South → (x, y + 1)
+	•	West → (x - 1, y)
+
+This is stored as a dictionary of movement deltas.
+
+Why this matters:
+	•	DFS and BFS can loop over directions
+	•	no duplicated math
+	•	easier bounds checking
+	•	fewer bugs
+
+Instead of writing movement logic four times, we write it once.
+
+⸻
+
+### A.9.3. Direction → Opposite Direction
+
+When carving or closing a wall, both cells must be updated.
+
+Example:
+
+	•	If you open East from (x, y)
+	•	You must also open West from (x+1, y)
+
+The opposite-direction dictionary answers:
+
+“If I move in this direction, which wall must I update on the neighbor?”
+
+This ensures:
+
+	•	wall coherence
+	•	no one-way walls
+	•	validators always pass
+
+⸻
+
+### A.9.4. Benefits of Dictionaries
+
+Using direction dictionaries allows the algorithms to be written conceptually:
+
+	•	“For each direction”
+	•	instead of “If direction is North, do this… If East, do that…”
+
+This gives us:
+
+	•	cleaner algorithms
+	•	fewer special cases
+	•	easier debugging
+	•	easier future changes
+
+For example:
+
+	•	adding a new validator
+	•	changing how walls are stored
+	•	adding decorations like the 42 logo
+
+All of that becomes possible without rewriting DFS or BFS.
+
+⸻
+
+### A.9.5. Takeaway
+
+Dictionaries turn repeated logic into data. Instead of repeating code, we let the data describe:
+
+	•	how to move
+	•	how to check walls
+	•	how to update neighbors
+
+This is why DFS, BFS, carving, validation, and decoration can all share the
+same direction system.
+
+---
+
+## A.10. Project Structure
+
+```
+.
+├── mazegen.py                          # API wrapper (prepared for reuse)
+├── a_maze_ing.py                       # Main entrypoint (CLI)
+├── config_parser.py                    # Reads config.txt -> config object
+├── output_writer.py                    # Writes output file in required format
+├── visualizer.py                       # ASCII/colored terminal display (UI)
+├── config.txt                          # Example configuration (input)
+├── Makefile                            # Build/run helpers
+├── README.md
+├── pyproject.toml
+└── maze_files/                         # Core library (public API lives here)
+    ├── __init__.py                     # Marks this folder as a Python package
+    ├── maze_definitions.py             # Maze data structure
+    ├── direction_definitions.py        # Direction dictionaries
+    ├── wall_operations.py              # Helper functions for walls
+    ├── dfs_maze_generator.py           # Maze generation using DFS
+    ├── multiple_path_maze.py           # Adds extra paths when PERFECT = false
+    ├── bfs_shortest_path_solver.py     # Finds the shortest path using BFS
+    └── forty_two_marking.py            # Defines and applies the 42 marking
+```
+---
+
+## A.11. AI Usage
+
+AI tools were used during this project as a **learning aid**, not as a code
+generator.
+
+AI assistance was used to:
+- clarify algorithm concepts when specific questions were not answered by the
+other resources on the internet.
+- discuss design decisions and architecture,
+- review logic and reasoning at the end of each working phase,
+- improve documentation clarity.
+
+All code was written, tested, and understood by the authors.
+No code was copied blindly.
+
+---
+
+# B. Instructions
+
+---
+
+## B.1. How to Run
+
+### B.1.1. Clone the repository
+
+```bash
+git clone 
+cd a_maze_ing
+```
+
+### B.1.2. Run with a Config File
+
+1. Edit `config.txt`.
+2. Run:
 
 ```bash
 python3 a_maze_ing.py config.txt
 ```
 
-### Running the Terminal Visualizer
+### B.1.3. Run with the Makefile
+This repository includes a `Makefile` to run the program with short commands.
+
+#### B.1.3.a. Default usage
 
 ```bash
-python3 maze_visualizer.py
+make run
 ```
 
-Or with custom files:
+Show all available commands:
 ```bash
-python3 maze_visualizer.py maze.txt config.txt
+make help
 ```
 
-### Available Make Commands
-
+Run with a different config file:
 ```bash
-make run           # Generate maze with default config
-make visualize     # Run the terminal visualizer
-make validate      # Validate maze output coherence
-make lint          # Run code quality checks (flake8 + mypy)
-make lint-strict   # Run strict mypy validation
-make clean         # Remove cache files
-make help          # Show all available commands
+make run CFG=your_config.txt
 ```
 
-### Visualizer Controls
-
-When running the visualizer, use these commands:
-
-- **1**: Re-generate a new maze with random variations
-- **2**: Toggle solution path visibility (cyan dots show the way)
-- **3**: Cycle through wall colors (White, Bright White, Yellow, Green, Cyan, Blue)
-- **4**: Quit the visualizer
-
-**Visual Elements:**
-- `E` (Magenta): Entry point (top-left)
-- `X` (Red): Exit point (bottom-right)
-- `·` (Cyan): Solution path (when toggled on)
-- `█` (Colored): Walls
-- ` ` (Space): Open corridors
-
-## Configuration File Format
-
-Create a `config.txt` file with these parameters:
-
-```ini
-# Maze dimensions (minimum 3x3)
-WIDTH=20
-HEIGHT=15
-
-# Entry and exit coordinates (x,y format)
-ENTRY=0,0
-EXIT=19,14
-
-# Output filename
-OUTPUT_FILE=maze.txt
-
-# Generate perfect maze? (True/False)
-PERFECT=True
-
-# Random seed for reproducibility (optional, random if omitted)
-SEED=42
-
-# Algorithm choice (optional, recursive_backtracking is default)
-ALGORITHM=recursive_backtracking
+Generate output and print it:
+```bash
+make output
 ```
 
-**Mandatory Keys:** WIDTH, HEIGHT, ENTRY, EXIT, OUTPUT_FILE, PERFECT  
-**Optional Keys:** SEED, ALGORITHM
+#### B.1.3.b. Cleanup
 
-### Configuration Notes
-
-- All coordinates are 0-indexed (0,0 is top-left)
-- Maze dimensions must be at least 3x3 and at most 1000x1000
-- Entry and exit must be different points within bounds
-- PERFECT=True generates a maze with exactly one path between entry/exit
-- SEED must be an integer; omit or randomize for random generation
-
-## Output File Format
-
-The generated `maze.txt` contains:
-
-```
-B9393955553D1555393B
-AAAAAA9157C3853D46C2
-C6C6AAEC5552C7C3D396
-...
-(HEIGHT lines of hex digits)
-
-0,0
-19,14
-SSENNESSENNESSSWSWWWSSEESSSWSEENNENNENESENEENENWWWWSWNNNNEEEEESESSEEEENWNWWNEEEESENESESWSSWWSSWSEENENESSWSSSWSSSSENES
+Remove Python cache files:
+```bash
+make clean
 ```
 
-**Structure:**
-- Lines 1-HEIGHT: Maze cells in hexadecimal (one digit per cell)
-- Empty line separator
-- Entry coordinates (x,y)
-- Exit coordinates (x,y)
-- Shortest path sequence (N/S/E/W directions)
+Remove cache files and the output file:
+```bash
+make distclean
+```
 
-### Wall Encoding
+---
 
-Each hex digit represents a cell's wall state (4 bits, one per cardinal direction):
+## B.2. Public API and Usage
 
-| Bit | Direction | Value |
-|-----|-----------|-------|
-| 0   | North     | 1     |
-| 1   | East      | 2     |
-| 2   | South     | 4     |
-| 3   | West      | 8     |
+This repository can be used in two ways:
 
-**Examples:**
-- `0x0` = No walls (open cell)
-- `0x5` (binary 0101) = North and South walls
-- `0xF` (binary 1111) = All walls (fully closed)
-- `0xA` (binary 1010) = East and West walls
+1) **As a CLI program** (run `a_maze_ing.py` with a config file)
+2) **As a reusable Python package** (import `mazegen` and `maze_files`)
 
-## Maze Generation Algorithm
+The **main public API** is `mazegen.py` at the repository root.
 
-### Chosen Algorithm: Recursive Backtracking (Depth-First Search)
+### B.2.1. Sections of the Public API
 
-**Why This Algorithm?**
+`mazegen.py` exposes two main pieces:
 
-1. **Perfect Maze Generation**: Produces mazes with exactly one path when PERFECT flag is set
-2. **Full Connectivity**: Guarantees all cells are reachable from the entry point
-3. **Simplicity & Efficiency**: Linear time complexity O(width × height)
-4. **Deterministic with Seeds**: Produces reproducible results with fixed random seeds
-5. **Well-Tested**: Industry-standard for maze generation (used in video games, puzzle generation)
+- `ConfigGen`: a small dataclass holding generation options
+- `MazeGenerator`: a high-level wrapper that runs generation + solving
 
-### How It Works
+Key methods:
+- `MazeGenerator.generate` (property): builds and generates the maze
+- `MazeGenerator.solve_maze_path()`: runs BFS and returns a coordinate path
+- `MazeGenerator.coords_to_directions(coords)`: converts a coordinate path to a `"NESW..."` string
 
-1. Start at entry point (0,0)
-2. Mark current cell as visited
-3. While unvisited neighbors exist:
-   - Choose a random unvisited neighbor
-   - Carve passage between cells (remove wall)
-   - Move to neighbor and repeat
-4. When stuck, backtrack until finding unvisited cells
-5. Continue until all cells are visited
+### B.2.2. Install as a package
 
-This creates a spanning tree of the maze, ensuring single connectivity.
+From the root of the repository:
 
-### Alternative Algorithms (Bonus)
+Toggle to virtual environment:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install build
+python -m build
+python -m build --sdist --wheel
+python -m pip install dist/mazegen_amazing / tab
+python -c "import mazegen; print('mazegen imported OK')"
+python a_naze_ing.py config.txt
+```
 
-Other maze generation algorithms that could be implemented:
-- **Prim's Algorithm**: Similar result, different approach
-- **Kruskal's Algorithm**: Union-find based generation
-- **Wilson's Algorithm**: Loop-erasing random walk
+Install the pubic API:
+```bash
+python3 -m pip install .
+```
 
-## Code Reusability
-
-### Reusable Module: `Maze` Class
-
-The core maze generation logic is encapsulated in the `Maze` class within `a_maze_ing.py`, making it importable and reusable in other projects.
-
-#### Import and Usage Example
-
+Confirm the installation was successful:
 ```python
-from a_maze_ing import Maze
-
-# Create a 30x30 maze with seed 12345
-maze = Maze(width=30, height=30, seed=12345)
-maze.generate(perfect=True)
-
-# Access maze data
-cells = maze.cells  # 2D array of cell wall encodings
-
-# Find path between two points
-path = maze._find_path((0, 0), (29, 29))
-print(f"Path: {path}")  # Output: "SSEESSEWWWSEE..." etc
-
-# Access specific cell
-cell_value = maze.cells[10][15]  # Get cell at (15, 10)
-print(f"Cell walls: {hex(cell_value)}")
+python3 -c "from mazegen import ConfigGen, MazeGenerator; print('API import OK')"
 ```
 
-#### Key Methods
+### B.2.3. Quick API example
 
-- `generate(perfect=False)`: Generate maze using recursive backtracking
-- `_find_path(start, end)`: Find shortest path using BFS (returns N/S/E/W string)
-- `validate(entry, exit)`: Validate maze integrity
-- `get_output(entry, exit)`: Generate output in required format
-
-#### Maze Structure
-
-- `cells`: 2D list `[[int, ...], ...]` where each int is wall encoding
-- `width`, `height`: Dimensions
-- `seed`: Reproducibility seed
-
-### Validation Tool: `output_validator.py`
-
-Standalone script to verify maze coherence:
+Toggle to Python interactive shell:
 ```bash
-python3 output_validator.py maze.txt
+python
 ```
 
-Checks that neighboring cells have consistent walls (no gaps or overlaps).
+Test with example cfg demo:
+```python
+from mazegen import ConfigGen, MazeGenerator
 
-## Resources
+cfg = ConfigGen(
+    width=10,
+    height=5,
+    entry=(0, 0),
+    exit=(9, 4),
+    seed=42,
+    perfect=True,
+    marking_42=True,
+)
 
-### References
+gen = MazeGenerator(cfg)
+maze = gen.generate()
+coords = gen.solve_maze_path()
+path_str = gen.coords_to_directions(coords)
 
-- **Maze Generation Algorithms**: https://en.wikipedia.org/wiki/Maze_generation_algorithm
-- **Depth-First Search**: https://en.wikipedia.org/wiki/Depth-first_search
-- **Breadth-First Search**: https://en.wikipedia.org/wiki/Breadth-first_search
-- **Python Type Hints**: https://docs.python.org/3/library/typing.html
-- **ANSI Color Codes**: https://en.wikipedia.org/wiki/ANSI_escape_code
-
-### AI Usage
-
-**AI was used for:**
-- **Code Structure & Organization**: Assistance with class design and module architecture
-- **Documentation**: Writing clear docstrings and README sections
-- **Testing Strategies**: Suggestions for edge case validation
-- **Terminal Rendering**: Guidance on ANSI color codes and terminal manipulation
-- **Error Handling**: Best practices for graceful error management
-
-**AI was NOT used for:**
-- Core algorithm implementation (Recursive Backtracking, BFS)
-- Wall encoding logic
-- Maze validation rules
-- Main business logic
-
-**AI Disclosure**: The project structure and some helper functions were aided by AI suggestions, but all core algorithms were implemented from first principles understanding.
-
-## Project Structure
-
-```
-hub/
-├── a_maze_ing.py           # Main maze generator
-├── maze_visualizer.py      # Terminal visualizer
-├── output_validator.py     # Maze validation utility
-├── config.txt              # Default configuration
-├── maze.txt                # Generated maze output
-├── Makefile                # Build automation
-├── README.md               # This file
-└── .gitignore              # Git exclusions
+print("coords:", coords[:5], "...")   # first few append as demo display
+print("path:", path_str)
 ```
 
-## Technical Choices
+Notes:
+- `coords_path` is a list of `(x, y)` coordinates from entry → exit.
+- `path_str` is the same path encoded as directions (`N`, `E`, `S`, `W`).
 
-1. **Python 3.10+**: Modern Python with type hints
-2. **Recursive Backtracking**: For reliable perfect maze generation
-3. **BFS for Pathfinding**: Guaranteed shortest path
-4. **Hexadecimal Format**: Compact 4-bit per cell storage
-5. **Terminal ANSI Colors**: Cross-platform visualization without external deps
+---
 
-## Testing & Validation
+# C. Resources
 
-Test the generator:
-```bash
-make validate     # Verify wall coherence
-```
+The following resources were used during the development of this project to
+understand algorithms, data structures, and design decisions.
 
-Test the visualizer:
-```bash
-make visualize    # Interactive testing
-```
+### C.1. Maze generation & graph traversal
+- Invent with Python — *Maze generation algorithms*  
+  https://inventwithpython.com/recursion/chapter11.html 
+  Common maze generation approaches and the idea of perfect mazes.
 
-Run code quality checks:
-```bash
-make lint         # Standard checks
-make lint-strict  # Strict validation
-```
+- Python Official — *Maze creation in Python*  
+  https://discuss.python.org/t/maze-creation-in-python/77030  
+  How DFS works and how it can be applied to maze generation.
 
-## Team & Project Management
+- Wikipedia — *Breadth-First Search (BFS)*  
+  https://en.wikipedia.org/wiki/Breadth-first_search  
+  Shortest-path guarantees in unweighted graphs.
 
-**Solo Project**: Developed by single team member
+### C.2. Python & Data Structures
+- Python Official Documentation — *collections.deque*  
+  https://docs.python.org/3/library/collections.html#collections.deque  
+  Efficient queue operations in BFS.
 
-**Roles:**
-- Algorithm Design & Implementation
-- Testing & Validation
-- Documentation
-- UI/UX (Terminal Visualization)
+- Python Official Documentation — *set*  
+  https://docs.python.org/3/library/stdtypes.html#set  
+  Efficiently track visited coordinates.
 
-**Evolution:**
-- Started with basic generator (mandatory part)
-- Added terminal visualizer (bonus feature)
-- Implemented interactive controls
-- Enhanced validation and error handling
-- Optimized maze rendering
+- Python Official Documentation — *random*  
+  https://docs.python.org/3/library/random.html  
+  Create deterministic maze generation via seeding.
 
-**What Worked Well:**
-- Clear separation of concerns (generator vs. visualizer)
-- Comprehensive validation prevents invalid mazes
-- Deterministic seeding enables reproducible testing
-- ANSI color codes provide good visual feedback
+- Python Official Documentation — *Stacks and Queues*  
+  https://realpython.com/queue-in-python/  
+  Understand the process of abstract data structures.
 
-**What Could Be Improved:**
-- MiniLibX graphical interface (bonus feature not implemented)
-- Performance optimization for very large mazes (>500x500)
-- Additional maze generation algorithms
-- Animation during maze generation
-- Configuration file GUI tool
+- W3 Schools — *Queues with Python*  
+  https://realpython.com/queue-in-python/  
+  Understand the process of abstract data structures.
 
-**Tools Used:**
-- Python 3.10
-- Standard library only (no external dependencies for core functionality)
-- VS Code for development
-- Git for version control
-- Make for task automation
+- Medium article — *Stack and Queue Implementations*  
+  https://medium.com/codex/understanding-stack-and-queue-implementations-in-python-a-theoretical-approach-e345e9c1362d  
+  Understand stacks and queues.
+
+- Datacamp — *Recursion in Python*  
+  https://www.datacamp.com/tutorial/recursion-in-python  
+  Understand the general concept of recursion in Python and the limitations.
+
+- Real Python — *Recursion in Python*  
+  https://realpython.com/python-recursion/  
+  Understand the general concept of recursion in Python and the limitations.
+
+---
+
+# D. Future improvements
+
+- Add generation/solving animations (DFS/BFS as generators + terminal rendering)
+- Improve visualization (colors, optional UI modes)
+
+---
+
+# E. Final Notes
+
+If you are new to DFS/BFS/graph traversal, this project is a nice place to practice.
